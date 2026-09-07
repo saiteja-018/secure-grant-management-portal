@@ -18,7 +18,3 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
-
-# Excluded per user request
-PROJECT_PLAN.md
-project_plan.md
