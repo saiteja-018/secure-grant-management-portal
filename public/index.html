@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegis Grant Portal | Secure Role-Based Grant Management</title>
+  <meta name="description" content="Enterprise grant management platform featuring Role-Based Access Control, OAuth 2.0, and end-to-end proposal tracking.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header / Navigation Bar -->
+  <header class="app-header">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-badge">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>AEGIS <span>PORTAL</span></h1>
+          <span class="subtext">Secure Grant Management & RBAC</span>
+        </div>
+      </div>
+
+      <div class="user-status-bar" id="userStatusBar">
+        <div class="guest-actions" id="guestActions">
+          <button class="btn btn-secondary btn-sm" id="btnOpenLogin">Sign In</button>
+          <button class="btn btn-primary btn-sm" id="btnOpenRegister">Register</button>
+        </div>
+        <div class="auth-user-info hidden" id="authUserInfo">
+          <div class="avatar" id="userAvatar">U</div>
+          <div class="user-meta">
+            <span class="user-name" id="userNameDisplay">User Name</span>
+            <div class="role-badges" id="userRoleBadges"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btnLogout" title="Sign Out">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Main Application Workspace -->
+  <main class="main-content">
+    <!-- Quick Demo Accounts Quick-Bar -->
+    <section class="demo-bar card glass-card">
+      <div class="demo-bar-label">
+        <span class="pulse-dot"></span>
+        <strong>Evaluation Quick-Switcher:</strong>
+      </div>
+      <div class="demo-bar-actions">
+        <button class="btn btn-demo admin-pill" onclick="quickLogin('admin@grantportal.io', 'AdminPassword123!')">
+          <span class="role-tag admin-tag">ADMIN</span> admin@grantportal.io
+        </button>
+        <button class="btn btn-demo grantor-pill" onclick="quickLoginDemoGrantor()">
+          <span class="role-tag grantor-tag">GRANTOR</span> grantor@foundation.org
+        </button>
+        <button class="btn btn-demo grantee-pill" onclick="quickLoginDemoGrantee()">
+          <span class="role-tag grantee-tag">GRANTEE</span> grantee@research.edu
+        </button>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" id="navigationTabs">
+      <button class="tab-btn active" data-tab="tabGrants">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        Grant Catalog
+      </button>
+      <button class="tab-btn" data-tab="tabGranteeApps" id="tabBtnGranteeApps">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        My Submissions
+      </button>
+      <button class="tab-btn" data-tab="tabGrantorManage" id="tabBtnGrantorManage">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        Grantor Studio
+      </button>
+      <button class="tab-btn" data-tab="tabAdminConsole" id="tabBtnAdminConsole">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Admin Governance
+      </button>
+      <button class="tab-btn" data-tab="tabTokenInspector">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        JWT & Security Claims
+      </button>
+    </nav>
+
+    <!-- Tab 1: Grants Explorer -->
+    <section class="tab-content active" id="tabGrants">
+      <div class="section-header">
+        <div>
+          <h2>Available Grant Opportunities</h2>
+          <p class="section-desc">Explore institutional funding opportunities, review requirements, and apply directly.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadGrants()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          Refresh Grants
+        </button>
+      </div>
+
+      <div class="grants-grid" id="grantsListContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Tab 2: Grantee Applications -->
+    <section class="tab-content" id="tabGranteeApps">
+      <div class="section-header">
+        <div>
+          <h2>My Submitted Proposals</h2>
+          <p class="section-desc">Track status and review outcomes of your submitted grant applications.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadMyApplications()">Refresh</button>
+      </div>
+      <div id="granteeAppsList">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- Tab 3: Grantor Studio -->
+    <section class="tab-content" id="tabGrantorManage">
+      <div class="section-header">
+        <div>
+          <h2>Grantor Studio</h2>
+          <p class="section-desc">Publish grants, manage funding parameters, and evaluate received applicant proposals.</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openCreateGrantModal()">+ New Grant Opportunity</button>
+      </div>
+
+      <div class="studio-grid">
+        <div class="card glass-card">
+          <h3 class="card-title">My Created Grants</h3>
+          <div id="grantorGrantsList" class="compact-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <div class="card glass-card">
+          <h3 class="card-title" id="selectedGrantReviewsTitle">Received Applications</h3>
+          <p class="section-desc" id="selectedGrantSubtitle">Select a grant from your list to review submitted proposals.</p>
+          <div id="grantorApplicationsList" class="compact-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Admin Governance -->
+    <section class="tab-content" id="tabAdminConsole">
+      <div class="section-header">
+        <div>
+          <h2>RBAC User Management</h2>
+          <p class="section-desc">Promote users, configure permissions, and view audit records (ADMIN permission required).</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadAdminUsers()">Refresh Directory</button>
+      </div>
+
+      <div class="card glass-card table-card">
+        <table class="data-table" id="adminUsersTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Current Roles</th>
+              <th>Assign Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminUsersTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Tab 5: Token & Security Claims Inspector -->
+    <section class="tab-content" id="tabTokenInspector">
+      <div class="section-header">
+        <div>
+          <h2>JWT Token & RBAC Inspector</h2>
+          <p class="section-desc">Real-time inspection of your cryptographic claims, user identifier, and active role set.</p>
+        </div>
+      </div>
+
+      <div class="inspector-grid">
+        <div class="card glass-card">
+          <div class="card-header-flex">
+            <h3>Decoded Token Claims</h3>
+            <span class="badge" id="tokenValidityBadge">No Token</span>
+          </div>
+          <pre class="code-block" id="decodedTokenDisplay">{ "status": "Not Authenticated" }</pre>
+        </div>
+
+        <div class="card glass-card">
+          <div class="card-header-flex">
+            <h3>Raw Bearer Access Token</h3>
+            <button class="btn btn-ghost btn-sm" onclick="copyTokenToClipboard()">Copy Token</button>
+          </div>
+          <textarea id="rawTokenDisplay" class="code-block textarea-token" readonly placeholder="Raw token will appear here once authenticated..."></textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modals -->
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('authModal')">&times;</button>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="authTabLogin" onclick="switchAuthMode('login')">Sign In</button>
+        <button class="auth-tab-btn" id="authTabRegister" onclick="switchAuthMode('register')">Create Account</button>
+      </div>
+
+      <form id="authForm" onsubmit="handleAuthSubmit(event)">
+        <div class="form-group hidden" id="registerNameGroup">
+          <label for="authName">Full Name</label>
+          <input type="text" id="authName" class="form-control" placeholder="Jane Doe">
+        </div>
+
+        <div class="form-group">
+          <label for="authEmail">Email Address</label>
+          <input type="email" id="authEmail" class="form-control" placeholder="user@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="authSubmitBtn">Sign In</button>
+      </form>
+
+      <div class="divider"><span>OR</span></div>
+
+      <!-- OAuth 2.0 Button -->
+      <a href="/api/auth/google" class="btn btn-google btn-block" id="googleOAuthBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.2 9 5 12 5z"/>
+          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/>
+          <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.8l3.7-2.9z"/>
+          <path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"/>
+        </svg>
+        Continue with Google (OAuth 2.0)
+      </a>
+      
+      <!-- Mock OAuth Simulator for Evaluation Environments -->
+      <button class="btn btn-ghost btn-block btn-sm" style="margin-top: 10px;" onclick="simulateGoogleOAuth()">
+        Simulate Google OAuth Flow (Instant Token)
+      </button>
+    </div>
+  </div>
+
+  <!-- Apply Grant Modal -->
+  <div class="modal-overlay" id="applyModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('applyModal')">&times;</button>
+      <h3 id="applyModalTitle">Submit Grant Application</h3>
+      <p class="section-desc" id="applyModalGrantSubtitle">Please present your proposal, timeline, and deliverables.</p>
+
+      <form id="applyForm" onsubmit="handleApplySubmit(event)">
+        <input type="hidden" id="applyGrantId">
+        <div class="form-group">
+          <label for="applyProposal">Project Proposal & Narrative</label>
+          <textarea id="applyProposal" class="form-control" rows="6" placeholder="Describe the objectives, methodology, milestones, and intended impact of your initiative..." required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('applyModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitApplication">Submit Proposal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create / Edit Grant Modal -->
+  <div class="modal-overlay" id="grantModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('grantModal')">&times;</button>
+      <h3 id="grantModalTitle">Create Grant Opportunity</h3>
+      <p class="section-desc">Define funding specifications for grantees.</p>
+
+      <form id="grantForm" onsubmit="handleGrantSubmit(event)">
+        <input type="hidden" id="editGrantId">
+        <div class="form-group">
+          <label for="grantTitleInput">Grant Title</label>
+          <input type="text" id="grantTitleInput" class="form-control" placeholder="e.g. Next-Gen Clean Energy Research Grant" required>
+        </div>
+        <div class="form-group">
+          <label for="grantAmountInput">Funding Amount (USD)</label>
+          <input type="number" id="grantAmountInput" class="form-control" placeholder="50000" min="0" step="100" required>
+        </div>
+        <div class="form-group">
+          <label for="grantDescInput">Description & Eligibility</label>
+          <textarea id="grantDescInput" class="form-control" rows="5" placeholder="Specify requirements, funding focus areas, and evaluation criteria..." required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('grantModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveGrant">Publish Grant</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
